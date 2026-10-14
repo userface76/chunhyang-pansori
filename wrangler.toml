@@ -11,3 +11,7 @@ run_worker_first = ["/api/*"]
 binding = "DB"
 database_name = "chunhyang-db"
 database_id = "d044bc6d-3ada-41dd-b72b-624278f52c7f"
+
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "chunhyang-uploads"
