@@ -26,7 +26,7 @@ const STAFF_BOARDS=new Set(['notices','press','newsletters','gallery','resources
 const hex=u=>Array.from(u,b=>b.toString(16).padStart(2,'0')).join('');
 const bytes=h=>new Uint8Array((h.match(/../g)||[]).map(x=>parseInt(x,16)));
 const secureEqual=(a,b)=>{if(a.length!==b.length)return false;let d=0;for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^b.charCodeAt(i);return d===0};
-const passwordHash=async(password,salt)=>{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return hex(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:bytes(salt),iterations:180000,hash:'SHA-256'},k,256)))};
+const passwordHash=async(password,salt)=>{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return hex(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:bytes(salt),iterations:100000,hash:'SHA-256'},k,256)))};
 const sign=async(message,env)=>{const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.ADMIN_API_TOKEN),'HMAC',false,['sign']);return hex(new Uint8Array(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(message))))};
 const issueSession=async(user,env)=>{const p=btoa(JSON.stringify({id:user.id,v:user.session_version,exp:Date.now()+8*3600*1000})).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');return 'staff.'+p+'.'+await sign(p,env)};
 const authUser=async(req,env)=>{
