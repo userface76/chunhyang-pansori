@@ -64,3 +64,8 @@
 .community-board-banner img{display:block;width:100%;max-width:1400px;height:auto;margin:0 auto;object-fit:contain}
 .community-board-banner+.community-board-page{padding-top:20px}
 @media(max-width:700px){.community-board-banner img{width:100%}.community-board-banner+.community-board-page{padding-top:12px}}
+
+/* Per-board illustration between board navigation and posts */
+.community-content-image{max-width:1100px;width:100%;margin:8px auto 20px;padding:0}
+.community-content-image img{display:block;width:100%;height:auto;object-fit:contain}
+@media(max-width:700px){.community-content-image{margin:4px auto 12px}}
