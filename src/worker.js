@@ -2,7 +2,8 @@
 // Bind D1 as DB and static assets as ASSETS in Cloudflare project settings.
 const CATEGORIES = Object.freeze({
   '공지사항':'notices', '언론보도':'press', '소식지':'newsletters',
-  '자료실':'resources', '재정보고':'finance'
+  '자료실':'resources', '재정보고':'finance',
+  '판소리 역사발굴':'history', '판소리 이론사업':'research', '연희사업':'performances', '대외협력사업':'partnerships'
 });
 const ALLOWED = new Set(Object.values(CATEGORIES));
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
