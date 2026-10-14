@@ -1,0 +1,13 @@
+name = "chunhyang-pansori-web3"
+main = "src/worker.js"
+compatibility_date = "2026-10-15"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chunhyang-db"
+database_id = "d044bc6d-3ada-41dd-b72b-624278f52c7f"
