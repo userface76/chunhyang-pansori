@@ -99,7 +99,7 @@ export default {async fetch(request,env){
      const x=await env.DB.prepare('SELECT id,username,display_name,active,created_at FROM staff_users ORDER BY id DESC').all();
      return reply({users:x.results||[]});
    }
-   const staffDeactivate=path.match(/^\\/api\\/admin\\/staff\\/(\\d+)\\/deactivate$/);
+   const staffDeactivate=path.match(/^\/api\/admin\/staff\/(\d+)\/deactivate$/);
    if(staffDeactivate&&method==='POST'){
      if(actor.role!=='super')return reply({error:'최고관리자 권한 필요'},403);
      await env.DB.prepare('UPDATE staff_users SET active=0,session_version=session_version+1 WHERE id=?').bind(+staffDeactivate[1]).run();
