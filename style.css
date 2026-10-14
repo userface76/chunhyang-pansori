@@ -58,3 +58,9 @@
 .community-landing .community-art>img{display:block!important;width:100%!important;max-width:none!important;height:auto!important;margin:0 auto!important}
 .community-landing .community-hotspots{left:12%;width:77%;top:34%;height:30%}
 @media(max-width:700px){.community-landing .community-art{width:100%!important}.community-landing .community-hotspots{top:34%;height:30%}}
+
+/* Separate community board hero images */
+.community-board-banner{width:100%;margin:0;padding:0;background:#fff;display:flex;justify-content:center}
+.community-board-banner img{display:block;width:100%;max-width:1400px;height:auto;margin:0 auto;object-fit:contain}
+.community-board-banner+.community-board-page{padding-top:20px}
+@media(max-width:700px){.community-board-banner img{width:100%}.community-board-banner+.community-board-page{padding-top:12px}}
