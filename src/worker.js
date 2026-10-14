@@ -90,8 +90,16 @@ export default {async fetch(request,env){
      if(actor.role!=='super')return reply({error:'최고관리자 권한 필요'},403);
      const v=await request.json(),username=clamp(v.username,50).toLowerCase(),password=String(v.password||'');
      if(!/^[a-z0-9_-]{3,50}$/.test(username)||password.length<12||password.length>128)return reply({error:'아이디 3~50자, 비밀번호 12~128자 필요'},400);
-     const salt=hex(crypto.getRandomValues(new Uint8Array(16))),hash=await passwordHash(password,salt);
-     await env.DB.prepare('INSERT INTO staff_users(username,display_name,password_salt,password_hash) VALUES(?,?,?,?)').bind(username,clamp(v.display_name||'춘향관리자',40),salt,hash).run();
+     let salt,hash;
+     try{salt=hex(crypto.getRandomValues(new Uint8Array(16)));hash=await passwordHash(password,salt)}
+     catch(e){console.error('Staff password hashing failed',e);return reply({error:'비밀번호 암호화 처리 오류. Worker 로그를 확인해주세요.'},500)}
+     try{await env.DB.prepare('INSERT INTO staff_users(username,display_name,password_salt,password_hash) VALUES(?,?,?,?)').bind(username,clamp(v.display_name||'춘향관리자',40),salt,hash).run()}
+     catch(e){console.error('Staff user insert failed',e);
+       const msg=String(e?.message||'');
+       if(/UNIQUE|constraint failed/i.test(msg))return reply({error:'이미 사용 중인 직원 아이디입니다. 다른 아이디를 입력해주세요.'},409);
+       if(/no such table|no such column/i.test(msg))return reply({error:'직원 계정 테이블 구조를 찾을 수 없습니다. D1 staff_users 테이블을 확인해주세요.'},503);
+       return reply({error:'직원 계정 DB 저장 오류입니다. Cloudflare Worker 로그를 확인해주세요.'},500)
+     }
      return reply({ok:true},201);
    }
    if(path==='/api/admin/staff'&&method==='GET'){
