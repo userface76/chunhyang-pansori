@@ -18,7 +18,10 @@ const fileType=(name,type)=>{
  const ext=name.toLowerCase().split('.').pop();
  const permitted={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',pdf:'application/pdf',txt:'text/plain',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',hwp:'application/x-hwp',hwpx:'application/zip',zip:'application/zip',mp4:'video/mp4'};
  if(!permitted[ext])return null;
- if(type&&type!=='application/octet-stream'&&type!==permitted[ext]&&!(ext==='hwpx'&&type==='application/x-hwpx'))return null;
+ // Browsers/Windows report several valid MIME types for Hancom HWP/HWPX.
+ const hancomMimes=new Set(['application/x-hwp','application/hwp','application/haansofthwp','application/vnd.hancom.hwp','application/x-hwpx','application/hwpx','application/vnd.hancom.hwpx','application/zip','application/x-zip-compressed','application/octet-stream','']);
+ if((ext==='hwp'||ext==='hwpx')&&!hancomMimes.has(type||''))return null;
+ if(ext!=='hwp'&&ext!=='hwpx'&&type&&type!=='application/octet-stream'&&type!==permitted[ext])return null;
  return {mime:permitted[ext],kind:['jpg','jpeg','png','webp','gif'].includes(ext)?'image':ext==='mp4'?'video':'attachment'};
 };
 
