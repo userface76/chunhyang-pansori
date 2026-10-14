@@ -113,6 +113,35 @@ export default {async fetch(request,env){
      await env.DB.prepare('UPDATE staff_users SET active=0,session_version=session_version+1 WHERE id=?').bind(+staffDeactivate[1]).run();
      return reply({ok:true});
    }
+   const staffAction=path.match(/^\/api\/admin\/staff\/(\d+)\/(reset-password|activate|delete)$/);
+   if(staffAction){
+     if(actor.role!=='super')return reply({error:'최고관리자 권한 필요'},403);
+     const id=Number(staffAction[1]),action=staffAction[2];
+     if(method!=='POST')return reply({error:'요청 방식 오류'},405);
+     if(action==='reset-password'){
+       const v=await request.json(),password=String(v.password||'');
+       if(password.length<12||password.length>128)return reply({error:'새 비밀번호는 12~128자여야 합니다'},400);
+       const salt=hex(crypto.getRandomValues(new Uint8Array(16))),hash=await passwordHash(password,salt);
+       const x=await env.DB.prepare('UPDATE staff_users SET password_salt=?,password_hash=?,session_version=session_version+1 WHERE id=?').bind(salt,hash,id).run();
+       return x.meta.changes?reply({ok:true}):reply({error:'계정 없음'},404);
+     }
+     if(action==='activate'){
+       const x=await env.DB.prepare('UPDATE staff_users SET active=1,session_version=session_version+1 WHERE id=?').bind(id).run();
+       return x.meta.changes?reply({ok:true}):reply({error:'계정 없음'},404);
+     }
+     const x=await env.DB.prepare('DELETE FROM staff_users WHERE id=?').bind(id).run();
+     return x.meta.changes?reply({ok:true}):reply({error:'계정 없음'},404);
+   }
+   if(path==='/api/admin/my-password'&&method==='POST'){
+     if(actor.role!=='staff')return reply({error:'직원 로그인으로 이용해주세요'},403);
+     const v=await request.json(),old=String(v.current_password||''),password=String(v.new_password||'');
+     if(password.length<12||password.length>128)return reply({error:'새 비밀번호는 12~128자여야 합니다'},400);
+     const u=await env.DB.prepare('SELECT password_salt,password_hash FROM staff_users WHERE id=?').bind(actor.id).first();
+     if(!u||!secureEqual(await passwordHash(old,u.password_salt),u.password_hash))return reply({error:'현재 비밀번호가 올바르지 않습니다'},401);
+     const salt=hex(crypto.getRandomValues(new Uint8Array(16))),hash=await passwordHash(password,salt);
+     await env.DB.prepare('UPDATE staff_users SET password_salt=?,password_hash=?,session_version=session_version+1 WHERE id=?').bind(salt,hash,actor.id).run();
+     return reply({ok:true,logout_required:true});
+   }
    if(path==='/api/admin/posts'&&method==='GET'){
      const slug=boardSlug(url);if(!SLUGS.has(slug)||!allowedBoard(actor,slug))return reply({error:'게시판 권한 없음'},403);
      const x=await env.DB.prepare('SELECT p.id,p.title,p.status,p.created_at,p.author_name FROM posts p JOIN boards b ON p.board_id=b.id WHERE b.slug=? ORDER BY p.id DESC LIMIT 100').bind(slug).all();
