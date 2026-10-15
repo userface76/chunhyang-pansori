@@ -54,9 +54,17 @@ export default {async fetch(request,env){
  if(path==='/api/staff/login'&&method==='POST'){
    const v=await request.json(),username=clamp(v.username,50).toLowerCase(),password=String(v.password||'');
    if(!/^[a-z0-9_-]{3,50}$/.test(username)||password.length<1)return reply({error:'로그인 정보를 확인하세요'},401);
-   const u=await env.DB.prepare('SELECT * FROM staff_users WHERE username=? AND active=1').bind(username).first();
-   if(!u||!secureEqual(await passwordHash(password,u.password_salt),u.password_hash))return reply({error:'아이디 또는 비밀번호가 틀립니다'},401);
-   return reply({ok:true,token:await issueSession(u,env),display_name:u.display_name,role:'staff'});
+   let u;
+   try{u=await env.DB.prepare('SELECT * FROM staff_users WHERE username=? AND active=1').bind(username).first()}
+   catch(e){console.error('Staff login D1 query failed:',e);return reply({error:'직원 계정 DB 조회 오류입니다. D1 staff_users 테이블 및 Worker 로그를 확인해주세요.'},503)}
+   if(!u)return reply({error:'아이디 또는 비밀번호가 틀립니다'},401);
+   let matched=false;
+   try{matched=secureEqual(await passwordHash(password,u.password_salt),u.password_hash)}
+   catch(e){console.error('Staff login password verification failed:',e);return reply({error:'비밀번호 검증 처리 오류입니다. Worker 로그를 확인해주세요.'},500)}
+   if(!matched)return reply({error:'아이디 또는 비밀번호가 틀립니다'},401);
+   if(!env.ADMIN_API_TOKEN)return reply({error:'관리자 로그인 서명 비밀키가 설정되지 않았습니다.'},503);
+   try{return reply({ok:true,token:await issueSession(u,env),display_name:u.display_name,role:'staff'})}
+   catch(e){console.error('Staff login session signing failed:',e);return reply({error:'직원 로그인 세션 발급 오류입니다. Worker 로그를 확인해주세요.'},500)}
  }
  if(path==='/api/posts'&&method==='GET'){
    const slug=boardSlug(url);if(!SLUGS.has(slug))return reply({error:'게시판 이름 오류'},400);
@@ -211,5 +219,5 @@ export default {async fetch(request,env){
  if(path.startsWith('/api/'))return reply({error:'API 없음'},404);
  if(!env.ASSETS)return new Response('ASSETS 바인딩 필요',{status:503});
  return env.ASSETS.fetch(request);
- }catch(e){return reply({error:'처리 실패: 데이터베이스·저장소 연결을 확인하세요'},500)}
+ }catch(e){console.error('Unhandled Chunhyang Worker API error:',e);return reply({error:'서버 처리 중 오류가 발생했습니다. Worker 로그를 확인해주세요.'},500)}
 }};
