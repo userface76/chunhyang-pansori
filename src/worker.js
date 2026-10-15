@@ -76,7 +76,8 @@ export default {async fetch(request,env){
    const where="WHERE board_id=? AND status='published' AND (title LIKE ? OR content LIKE ?)";
    const like='%'+q+'%';
    const total=await env.DB.prepare('SELECT COUNT(*) n FROM posts '+where).bind(b.id,like,like).first();
-   const x=await env.DB.prepare('SELECT id,title,excerpt,author_name,created_at,published_at,is_pinned FROM posts '+where+' ORDER BY is_pinned DESC, COALESCE(published_at,created_at) DESC,id DESC LIMIT ? OFFSET ?').bind(b.id,like,like,limit,(page-1)*limit).all();
+   const listCols=slug==='gallery'?"p.id,p.title,p.excerpt,p.author_name,p.created_at,p.published_at,p.is_pinned,(SELECT f.id FROM post_files f WHERE f.post_id=p.id AND f.kind='image' ORDER BY CASE WHEN instr(p.content,'[[image:'||f.id||']]')>0 THEN 0 ELSE 1 END,f.sort_order,f.id LIMIT 1) AS cover_image_id":"id,title,excerpt,author_name,created_at,published_at,is_pinned";
+   const x=await env.DB.prepare('SELECT '+listCols+' FROM posts '+(slug==='gallery'?'p ':'')+where+' ORDER BY is_pinned DESC, COALESCE(published_at,created_at) DESC,id DESC LIMIT ? OFFSET ?').bind(b.id,like,like,limit,(page-1)*limit).all();
    return reply({board:slug,posts:x.results||[],total:total?.n||0,page,limit});
  }
  const single=path.match(/^\/api\/posts\/(\d+)$/);
