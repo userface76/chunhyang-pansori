@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /community-admin.html
+Disallow: /api/admin/
+Disallow: /api/staff/
+Sitemap: https://chunhyang.co.kr/sitemap.xml
